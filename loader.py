@@ -3,23 +3,69 @@ from sphfile import SPHFile
 import os
 import numpy as np
 
-def timit2mfcc(timit_path):
+def get_x(path):
+	# window = 400 frames
+	# stride = 160 frames
+	audio = SPHFile(path).content
+	audio = mfcc(audio, numcep = 39)
+	return np.array(audio)
+
+def get_y(path, length, phone_dict):
+	phones = []
+	with open(path, 'r') as f:
+		lines = f.readlines()
+		for line in lines:
+			if line == '':
+				break
+			line = line.split('\n')[0]
+			start = int(line.split(' ')[0])
+			end = int(line.split(' ')[1])
+			phone = line.split(' ')[2]
+			if not np.isin([phone], phone_dict)[0]:
+				phone_dict = np.append(phone_dict, phone)
+			add = np.argwhere(phone_dict == phone)[0][0]
+			start = (start-200) if start >= 200 else 0
+			end = (end-200) if end >= 200 else 0
+			times = (end//160)-(start//160)+(1 if start%160 == 0 else 0)-(1 if end%160 == 0 else 0)
+			phones += [add+1]*times
+		while len(phones) > length:
+			phones = phones[:-1]
+		while len(phones) < length:
+			phones += phones[-1:]
+	return np.array(phones), phone_dict
+
+
+def load_timit(timit_path):
+	x_train = []
+	y_train = []
+	x_test = []
+	y_test = []
+	phone_dict = np.array([])
 	for two in ['train', 'test']:
 		here = os.path.join(timit_path, two) 
 		file_list = [file for file in os.listdir(here)]
 		file_list.sort()
 		for file in file_list:
+			print('\r'+two, file, end = '')
 			here2 = os.path.join(here, file)
 			file_list2 = [file for file in os.listdir(here2)]
 			file_list2.sort()
 			for file2 in file_list2:
 				here3 = os.path.join(here2, file2)
-				file_list3 = [file for file in os.listdir(here3) if file.endswith('wav')]
+				file_list3 = [file.split('.wav')[0] for file in os.listdir(here3) if file.endswith('wav')]
 				file_list3.sort()
 				for file3 in file_list3:
-					here3 = os.path.join(here3, file3)
-					audio = SPHFile(here3).content
-					print(audio)
-					exit()
-
-timit2mfcc('../timit/')
+					here4 = os.path.join(here3, file3)
+					audio = get_x(here4+'.wav')
+					phones, phone_dict = get_y(here4+'.phn', len(audio), phone_dict)
+					if len(audio) != len(phones):
+						print('error: ', here4)
+						print(len(audio), len(phones))
+						exit()
+					if two == 'train':
+						x_train.append(audio)
+						y_train.append(phones)
+					else:
+						x_test.append(audio)
+						y_test.append(phones)
+	return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test), phone_dict
