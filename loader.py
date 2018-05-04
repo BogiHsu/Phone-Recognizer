@@ -1,7 +1,7 @@
 from python_speech_features import mfcc
 from sphfile import SPHFile
-import os
 import numpy as np
+import os
 
 def get_x(path):
 	# window = 400 frames
@@ -46,7 +46,7 @@ def load_timit(timit_path):
 		file_list = [file for file in os.listdir(here)]
 		file_list.sort()
 		for file in file_list:
-			print('\r'+two, file, end = '')
+			print('\r%5s'%two, file, end = '')
 			here2 = os.path.join(here, file)
 			file_list2 = [file for file in os.listdir(here2)]
 			file_list2.sort()
@@ -69,3 +69,14 @@ def load_timit(timit_path):
 						x_test.append(audio)
 						y_test.append(phones)
 	return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test), phone_dict
+
+def get_mfcc():
+	return np.load('./mfcc/x_train.npz'), np.load('./mfcc/y_train.npz'), np.load('./mfcc/x_test.npz'), np.load('./mfcc/y_test.npz'), np.load('./mfcc/phone_dict.npz')
+
+if __name__ == '__main__':
+	x_train, y_train, x_test, y_test, phone_dict = load_timit('../timit/')
+	np.save('./mfcc/x_train.npz', x_train)
+	np.save('./mfcc/y_train.npz', y_train)
+	np.save('./mfcc/x_test.npz', x_test)
+	np.save('./mfcc/y_test.npz', y_test)
+	np.save('./mfcc/phone_dict.npz', phone_dict)
