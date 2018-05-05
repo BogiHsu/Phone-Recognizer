@@ -7,8 +7,9 @@ def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
 	audio = SPHFile(path).content
-	audio = mfcc(audio, numcep = 39)
-	return np.array(audio)
+	audio = mfcc(audio, numcep = 39, nfilt = 39)
+	audio = np.array(audio)
+	return audio
 
 def get_y(path, length, phone_dict):
 	phones = []
@@ -27,11 +28,11 @@ def get_y(path, length, phone_dict):
 			start = (start-200) if start >= 200 else 0
 			end = (end-200) if end >= 200 else 0
 			times = (end//160)-(start//160)+(1 if start%160 == 0 else 0)-(1 if end%160 == 0 else 0)
-			phones += [add+1]*times
-		while len(phones) > length:
-			phones = phones[:-1]
-		while len(phones) < length:
-			phones += phones[-1:]
+			phones += [add]*times
+	while len(phones) > length:
+		phones = phones[:-1]
+	while len(phones) < length:
+		phones += phones[-1:]
 	return np.array(phones), phone_dict
 
 
@@ -58,25 +59,23 @@ def load_timit(timit_path):
 					here4 = os.path.join(here3, file3)
 					audio = get_x(here4+'.wav')
 					phones, phone_dict = get_y(here4+'.phn', len(audio), phone_dict)
-					if len(audio) != len(phones):
-						print('error: ', here4)
-						print(len(audio), len(phones))
-						exit()
 					if two == 'train':
 						x_train.append(audio)
 						y_train.append(phones)
 					else:
 						x_test.append(audio)
 						y_test.append(phones)
+					if len(phones) != len(audio):
+						print('error')
 	return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test), phone_dict
 
 def get_mfcc():
-	return np.load('./mfcc/x_train.npz'), np.load('./mfcc/y_train.npz'), np.load('./mfcc/x_test.npz'), np.load('./mfcc/y_test.npz'), np.load('./mfcc/phone_dict.npz')
+	return np.load('./mfcc/x_train.npy'), np.load('./mfcc/y_train.npy'), np.load('./mfcc/x_test.npy'), np.load('./mfcc/y_test.npy'), np.load('./mfcc/phone_dict.npy')
 
 if __name__ == '__main__':
 	x_train, y_train, x_test, y_test, phone_dict = load_timit('../timit/')
-	np.save('./mfcc/x_train.npz', x_train)
-	np.save('./mfcc/y_train.npz', y_train)
-	np.save('./mfcc/x_test.npz', x_test)
-	np.save('./mfcc/y_test.npz', y_test)
-	np.save('./mfcc/phone_dict.npz', phone_dict)
+	np.save('./mfcc/x_train.npy', x_train)
+	np.save('./mfcc/y_train.npy', y_train)
+	np.save('./mfcc/x_test.npy', x_test)
+	np.save('./mfcc/y_test.npy', y_test)
+	np.save('./mfcc/phone_dict.npy', phone_dict)
