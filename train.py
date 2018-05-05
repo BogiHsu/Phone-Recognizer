@@ -28,8 +28,8 @@ test_size = x_test.shape[0]
 
 
 epochs = 400
-v_period = 20
-v_size = (x_test.shape[0])//10
+v_period = 10
+v_size = (test_size)//10
 save_period = 20
 max_keep = 15
 batch_size = 1
@@ -66,20 +66,19 @@ with tf.Session() as sess:
 			batch_ys = np.array([y_train[c]])
 			sess.run([train_op], feed_dict = {x:batch_xs, y:batch_ys})
 	
-		if step%v_period == 0:
+		if (step%v_period == 0 or step%save_period == 0):
 			acc = 0
 			loss = 0
-			
 			for c in range(v_size):
 				batch_xs = np.array([x_test[c]])
 				batch_ys = np.array([y_test[c]])
 				acc += sess.run(accuracy, feed_dict = {x:batch_xs, y:batch_ys})
 				loss += sess.run(cost, feed_dict = {x:batch_xs, y:batch_ys})
-			his.write('step:'+str(step)+' acc: %5.3f'%(acc/v_size)+' loss: %.3f\n'%(loss/v_size))
-			print('step:', step, ' acc: %5.3f'%(acc/v_size), ' loss: %.3f'%(loss/v_size), ''*10)
-
-		#if step%save_period == 0:
-			save_path = saver.save(sess, 'models/model-'+str(step).zfill(3)+'-'+str(round((acc/v_size),2))+'.ckpt')
+			if step%v_period == 0:
+				his.write('step:'+str(step)+' acc: %5.3f'%(acc/v_size)+' loss: %.3f\n'%(loss/v_size))
+				print('step:', step, ' acc: %5.3f'%(acc/v_size), ' loss: %.3f'%(loss/v_size), ''*10)
+			if step%save_period == 0:
+				save_path = saver.save(sess, 'models/model-'+str(step).zfill(3)+'-'+str(round((acc/v_size),2))+'.ckpt')
 			print('saving model to %s'%save_path)
 		step += 1
 his.close()
