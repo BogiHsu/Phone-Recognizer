@@ -10,7 +10,7 @@ np.random.seed(0)
 # load timit2mfcc data
 print('reading data')
 x_train, y_train, x_test, y_test, phone_dict = get_mfcc()
-x_train, _, y_train, _ = train_test_split(x_train[], y_train[], test_size = 0., random_state = 0)
+x_train, _, y_train, _ = train_test_split(x_train[:], y_train[:], test_size = 0., random_state = 0)
 y_train = np.array([np.eye(len(phone_dict))[y] for y in y_train])
 y_test = np.array([np.eye(len(phone_dict))[y] for y in y_test])
 
