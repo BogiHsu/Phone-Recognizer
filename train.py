@@ -1,35 +1,31 @@
 import tensorflow as tf
 import numpy as np
+from sklearn.model_selection import train_test_split
 from model import phone_recognizer
 from loader import get_mfcc
+tf.set_random_seed(0)
+np.random.seed(0)
 
 # load timit2mfcc data
 print('reading data')
 x_train, y_train, x_test, y_test, phone_dict = get_mfcc()
-'''
-x_train = x_train[:20]
-y_train = y_train[:20]
-x_test = x_test[:20]
-y_test = y_test[:20]
-'''
+x_train, _, y_train, _ = train_test_split(x_train, y_train, test_size = 0., random_state = 0)
 y_train = np.array([np.eye(len(phone_dict))[y] for y in y_train])
 y_test = np.array([np.eye(len(phone_dict))[y] for y in y_test])
 
 # init parameters
 print('set up parameters')
-tf.set_random_seed(0)
-np.random.seed(0)
 mfcc_dim = 39
 phone_num = len(phone_dict)
 layer_num = 2
-layer_dim = [256]*layer_num
+layer_dim = [128]*layer_num
 train_size = x_train.shape[0]
 test_size = x_test.shape[0]
 
 
 epochs = 400
 v_period = 10
-v_size = (test_size)//10
+v_size = (test_size)//8
 save_period = 20
 max_keep = 15
 batch_size = 1
@@ -79,6 +75,6 @@ with tf.Session() as sess:
 				print('step:', step, ' acc: %5.3f'%(acc/v_size), ' loss: %.3f'%(loss/v_size), ''*10)
 			if step%save_period == 0:
 				save_path = saver.save(sess, 'models/model-'+str(step).zfill(3)+'-'+str(round((acc/v_size),2))+'.ckpt')
-			print('saving model to %s'%save_path)
+				print('saving model to %s'%save_path)
 		step += 1
 his.close()
