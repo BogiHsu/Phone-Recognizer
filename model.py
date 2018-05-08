@@ -3,7 +3,7 @@ from tensorflow.contrib import rnn
 import numpy as np
 
 
-def phone_recognizer(x, phone_num, batch_size, layer_num, layer_dim, dr = 0.5):
+def phone_recognizer(x, phone_num, batch_size, layer_num, layer_dim, dr):
 	weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
 	biases = tf.Variable(tf.zeros([phone_num, ]))
 	layers = []

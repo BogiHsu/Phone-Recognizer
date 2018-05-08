@@ -3,11 +3,18 @@ from sphfile import SPHFile
 import numpy as np
 import os
 
+sample_rate = 16000
+win_len = 0.05
+win_step = 0.01
+mfcc_dim = 39
+h_window = win_len*sample_rate*0.5
+stride = win_step*sample_rate
+
 def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
 	audio = SPHFile(path).content
-	audio = mfcc(audio, numcep = 39, nfilt = 39)
+	audio = mfcc(audio, numcep = mfcc_dim, nfilt = mfcc_dim, winlen = win_len, winstep = win_step, nfft = 1024)
 	audio = np.array(audio)
 	return audio
 
@@ -25,15 +32,15 @@ def get_y(path, length, phone_dict):
 			if not np.isin([phone], phone_dict)[0]:
 				phone_dict = np.append(phone_dict, phone)
 			add = np.argwhere(phone_dict == phone)[0][0]
-			start = (start-200) if start >= 200 else 0
-			end = (end-200) if end >= 200 else 0
-			times = (end//160)-(start//160)+(1 if start%160 == 0 else 0)-(1 if end%160 == 0 else 0)
-			phones += [add]*times
+			start = (start-h_window) if start >= h_window else 0
+			end = (end-h_window) if end >= h_window else 0
+			times = (end//stride)-(start//stride)+(1 if start%stride == 0 else 0)-(1 if end%stride == 0 else 0)
+			phones += [add]*int(times)
 	while len(phones) > length:
 		phones = phones[:-1]
 	while len(phones) < length:
 		phones += phones[-1:]
-	return np.array(phones), phone_dict
+	return np.array(phones, dtype = 'int8'), phone_dict
 
 
 def load_timit(timit_path):
@@ -67,6 +74,7 @@ def load_timit(timit_path):
 						y_test.append(phones)
 					if len(phones) != len(audio):
 						print('error')
+						exit()
 	return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test), phone_dict
 
 def get_mfcc():
