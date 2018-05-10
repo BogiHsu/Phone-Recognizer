@@ -1,20 +1,22 @@
 from python_speech_features import mfcc
 from sphfile import SPHFile
 import numpy as np
+import librosa
 import os
 
 sample_rate = 16000
-win_len = 0.05
+win_len = 0.025
 win_step = 0.01
 mfcc_dim = 39
-h_window = win_len*sample_rate*0.5
-stride = win_step*sample_rate
+h_window = 1440*0.5#win_len*sample_rate*0.5
+stride = 400#win_step*sample_rate
 
 def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
 	audio = SPHFile(path).content
-	audio = mfcc(audio, numcep = mfcc_dim, nfilt = mfcc_dim, winlen = win_len, winstep = win_step, nfft = 1024)
+	#audio = mfcc(audio, numcep = mfcc_dim, nfilt = mfcc_dim, winlen = win_len, winstep = win_step, nfft = 1600)
+	audio = np.transpose(librosa.feature.mfcc(y = audio.astype(float), sr = sample_rate, n_mfcc = mfcc_dim, n_fft = int(h_window*2), hop_length = int(stride)), [1,0])
 	audio = np.array(audio)
 	return audio
 
