@@ -42,13 +42,13 @@ layer_dim = [512]*layer_num
 train_size = x_train.shape[0]
 test_size = x_test.shape[0]
 
-epochs = 100
+epochs = 200
 v_period = 1
 v_size = (test_size)
 save_period = 5
 max_keep = 10
 batch_size = 16
-lr = 0.01
+lr = 0.005
 dr = 0.35
 
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
@@ -62,7 +62,7 @@ print('building model')
 res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
-reg_cost = 1e-5*tf.reduce_sum([tf.nn.l2_loss(v) for v in tv ])
+reg_cost = 1e-6*tf.reduce_sum([tf.nn.l2_loss(v) for v in tv ])
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+reg_cost
 train_op = tf.train.AdamOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
@@ -74,7 +74,7 @@ accuracy = tf.divide(tf.reduce_sum(correct_pred), tf.reduce_sum(acc_mask))
 print('start training')
 init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 saver = tf.train.Saver(max_to_keep = max_keep)
-his = open('./history-adam15', 'w')
+his = open('./history-adam16', 'w')
 with tf.Session() as sess:
 	sess.run(init[0])
 	sess.run(init[1])
