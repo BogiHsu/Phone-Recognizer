@@ -9,7 +9,7 @@ np.random.seed(0)
 
 # load timit2mfcc data
 print('reading data')
-o_x_train, o_y_train, _, o_y_test, phone_dict = get_mfcc()
+o_x_train, o_y_train, o_x_test, o_y_test, phone_dict = get_mfcc()
 
 # preprocessing
 print('preprocessing')
@@ -32,24 +32,43 @@ for i in range(num_samples):
 		past = here
 	to_many[1] = min(len(o_y_train[i]), to_many[1]+1)
 	mask_train[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
-x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_train, y_train, mask_train, test_size = 0.03, random_state = 0)
+
+test_samples = o_x_test.shape[0]
+x_test = np.zeros([test_samples, max_length, mfcc_dim])
+y_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
+mask_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
+for i in range(test_samples):
+	x_test[i, :len(o_x_test[i]), :] = o_x_test[i]/60
+	y_test[i, :len(o_y_test[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_test[i]]
+	to_many = [0, len(o_y_test[i])]
+	past = 0
+	for here in np.where(o_y_test[i] == 0)[0]:
+		if here-past > 1:
+			to_many[0] = past
+			to_many[1] = here
+			break
+		past = here
+	to_many[1] = min(len(o_y_test[i]), to_many[1]+1)
+	mask_test[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
+
+x_train, _, y_train, _, mask_train, _ = train_test_split(x_train, y_train, mask_train, test_size = .0, random_state = 0)
+x_test, _, y_test, _, mask_test, _ = train_test_split(x_test, y_test, mask_test, test_size = 0.2, random_state = 0)
 
 # init parameters
 print('set up parameters')
 phone_num = len(phone_dict)
 layer_num = 2
-layer_dim = [512]*layer_num
+layer_dim = [256]*layer_num
 train_size = x_train.shape[0]
 test_size = x_test.shape[0]
 
 epochs = 200
 v_period = 1
-v_size = (test_size)
 save_period = 5
 max_keep = 10
 batch_size = 16
 lr = 0.005
-dr = 0.35
+dr = 0.5
 
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
 y = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
@@ -62,9 +81,9 @@ print('building model')
 res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
-reg_cost = 1e-6*tf.reduce_sum([tf.nn.l2_loss(v) for v in tv ])
+reg_cost = 1e-6*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+reg_cost
-train_op = tf.train.AdamOptimizer(lr).minimize(cost)
+train_op = tf.train.RMSPropOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(res, 2)
 correct_pred = tf.multiply(tf.cast(tf.equal(predict, tf.argmax(y, 2)), tf.float32), acc_mask)
@@ -97,7 +116,7 @@ with tf.Session() as sess:
 			t_acc += tmpa
 			t_loss += tmpc
 			print('\rEpoch: ', '%3d/%3d'%(step, epochs), ' | Train: ', sep = '', end = '')
-			print('%5.1f'%(100*(c/train_size)), '% ', sep = '', end = '')
+			print('%3.0f'%(100*(c/train_size)), '% ', sep = '', end = '')
 			print(' acc: %5.3f'%(t_acc/count), ' loss: %5.3f'%(t_loss/count), end = '')
 		x_train, y_train, mask_train = shuffle(x_train, y_train, mask_train, random_state = step)
 		
@@ -105,9 +124,9 @@ with tf.Session() as sess:
 			acc = 0
 			loss = 0
 			count = 0
-			for c in range(0, v_size, batch_size):
+			for c in range(0, test_size, batch_size):
 				count += 1
-				if c+batch_size > v_size:
+				if c+batch_size > test_size:
 					batch_xs = x_test[-1*batch_size:]
 					batch_ys = y_test[-1*batch_size:]
 					batch_masks = mask_test[-1*batch_size:]
