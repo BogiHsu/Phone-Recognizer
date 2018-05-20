@@ -60,7 +60,7 @@ phone_num = len(phone_dict)
 layer_num = 2
 layer_dim = [256]*layer_num
 train_size = x_train.shape[0]
-test_size = x_test.shape[0]
+test_size = x_test.shape[0]//3
 
 epochs = 200
 v_period = 1
@@ -105,8 +105,8 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(1, 0.001)
-			batch_xs = x_train[choose]#*noise
+			noise = np.random.normal(1, 0.01)
+			batch_xs = x_train[choose]*noise
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
 			
@@ -124,14 +124,10 @@ with tf.Session() as sess:
 			count = 0
 			for c in range(0, test_size, batch_size):
 				count += 1
-				if c+batch_size > test_size:
-					batch_xs = x_test[-1*batch_size:]
-					batch_ys = y_test[-1*batch_size:]
-					batch_masks = mask_test[-1*batch_size:]
-				else:
-					batch_xs = x_test[c:c+batch_size]
-					batch_ys = y_test[c:c+batch_size]
-					batch_masks = mask_test[c:c+batch_size]
+				choose = np.random.randint(0, len(x_test), batch_size)
+				batch_xs = x_test[choose]
+				batch_ys = y_test[choose]
+				batch_masks = mask_test[choose]
 				acc += sess.run(accuracy, feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
 				loss += sess.run(cost, feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
 			if step%v_period == 0:
