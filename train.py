@@ -16,11 +16,13 @@ print('preprocessing')
 num_samples = o_x_train.shape[0]
 max_length = max([len(train) for train in o_y_train]+[len(test) for test in o_y_test])
 mfcc_dim = 39
+max_mfcc = 1220
+min_mfcc = -45
 x_train = np.zeros([num_samples, max_length, mfcc_dim])
 y_train = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 mask_train = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 for i in range(num_samples):
-	x_train[i, :len(o_x_train[i]), :] = o_x_train[i]/60
+	x_train[i, :len(o_x_train[i]), :] = (o_x_train[i]-min_mfcc)/(max_mfcc-min_mfcc)
 	y_train[i, :len(o_y_train[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_train[i]]
 	to_many = [0, len(o_y_train[i])]
 	past = 0
@@ -38,7 +40,7 @@ x_test = np.zeros([test_samples, max_length, mfcc_dim])
 y_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
 mask_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
 for i in range(test_samples):
-	x_test[i, :len(o_x_test[i]), :] = o_x_test[i]/60
+	x_test[i, :len(o_x_test[i]), :] = (o_x_test[i]-min_mfcc)/(max_mfcc-min_mfcc)
 	y_test[i, :len(o_y_test[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_test[i]]
 	to_many = [0, len(o_y_test[i])]
 	past = 0
@@ -81,9 +83,9 @@ print('building model')
 res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
-reg_cost = 1e-6*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
+reg_cost = 1e-7*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+reg_cost
-train_op = tf.train.RMSPropOptimizer(lr).minimize(cost)
+train_op = tf.train.AdamOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(res, 2)
 correct_pred = tf.multiply(tf.cast(tf.equal(predict, tf.argmax(y, 2)), tf.float32), acc_mask)
@@ -93,7 +95,7 @@ accuracy = tf.divide(tf.reduce_sum(correct_pred), tf.reduce_sum(acc_mask))
 print('start training')
 init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 saver = tf.train.Saver(max_to_keep = max_keep)
-his = open('./history-adam16', 'w')
+his = open('./history-adam17', 'w')
 with tf.Session() as sess:
 	sess.run(init[0])
 	sess.run(init[1])
@@ -104,14 +106,12 @@ with tf.Session() as sess:
 		t_loss = 0
 		for c in range(0, len(x_train), batch_size):
 			count += 1
-			if c+batch_size > len(x_train):
-				batch_xs = x_train[-1*batch_size:]
-				batch_ys = y_train[-1*batch_size:]
-				batch_masks = mask_train[-1*batch_size:]
-			else:
-				batch_xs = x_train[c:c+batch_size]
-				batch_ys = y_train[c:c+batch_size]
-				batch_masks = mask_train[c:c+batch_size]
+			choose = np.random.randint(0, len(x_train), batch_size)
+			noise = np.random.normal(0, 0.025, (batch_size, max_length, mfcc_dim))
+			batch_xs = x_train[choose]+noise
+			batch_ys = y_train[choose]
+			batch_masks = mask_train[choose]
+			
 			_, tmpa, tmpc = sess.run([train_op, accuracy, cost], feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
 			t_acc += tmpa
 			t_loss += tmpc
