@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import numpy as np
-
+tf.set_random_seed(0)
 
 def phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr = 0.5):
 	# BDLSTM

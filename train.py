@@ -16,13 +16,11 @@ print('preprocessing')
 num_samples = o_x_train.shape[0]
 max_length = max([len(train) for train in o_y_train]+[len(test) for test in o_y_test])
 mfcc_dim = 39
-max_mfcc = 1220
-min_mfcc = -45
 x_train = np.zeros([num_samples, max_length, mfcc_dim])
 y_train = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 mask_train = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 for i in range(num_samples):
-	x_train[i, :len(o_x_train[i]), :] = (o_x_train[i]-min_mfcc)/(max_mfcc-min_mfcc)
+	x_train[i, :len(o_x_train[i]), :] = o_x_train[i]/60
 	y_train[i, :len(o_y_train[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_train[i]]
 	to_many = [0, len(o_y_train[i])]
 	past = 0
@@ -40,7 +38,7 @@ x_test = np.zeros([test_samples, max_length, mfcc_dim])
 y_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
 mask_test = np.zeros([test_samples, max_length, len(phone_dict)], dtype = 'int8')
 for i in range(test_samples):
-	x_test[i, :len(o_x_test[i]), :] = (o_x_test[i]-min_mfcc)/(max_mfcc-min_mfcc)
+	x_test[i, :len(o_x_test[i]), :] = o_x_test[i]/60
 	y_test[i, :len(o_y_test[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_test[i]]
 	to_many = [0, len(o_y_test[i])]
 	past = 0
@@ -85,7 +83,7 @@ mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
 reg_cost = 1e-7*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+reg_cost
-train_op = tf.train.AdamOptimizer(lr).minimize(cost)
+train_op = tf.train.RMSPropOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(res, 2)
 correct_pred = tf.multiply(tf.cast(tf.equal(predict, tf.argmax(y, 2)), tf.float32), acc_mask)
@@ -107,8 +105,8 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(0, 0.025, (batch_size, max_length, mfcc_dim))
-			batch_xs = x_train[choose]+noise
+			noise = np.random.normal(1, 0.001)
+			batch_xs = x_train[choose]#*noise
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
 			
