@@ -105,7 +105,7 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(1, 0.02)
+			noise = np.random.normal(1, 0.1, (batch_size, max_length, mfcc_dim))
 			batch_xs = x_train[choose]*noise
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
