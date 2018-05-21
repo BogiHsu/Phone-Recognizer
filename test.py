@@ -1,8 +1,8 @@
-import tensorflow as tf
 import numpy as np
-from sklearn.model_selection import train_test_split
-from model import phone_recognizer
+import tensorflow as tf
+from model import *
 from loader import get_mfcc
+from sklearn.model_selection import train_test_split
 tf.set_random_seed(0)
 np.random.seed(0)
 
@@ -29,19 +29,20 @@ _, x_test, _, y_test, _, mask_test = train_test_split(x_test, y_test, mask_test,
 print('set up parameters')
 phone_num = len(phone_dict)
 layer_num = 2
-layer_dim = [1024]*layer_num
+layer_dim = [256]*layer_num
 test_size = x_test.shape[0]
 batch_size = 32
 
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
 y = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
 mask = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
-weights = tf.Variable(tf.random_normal([2*layer_dim[-1], phone_num]))
+weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
 biases = tf.Variable(tf.random_normal([phone_num, ]))
 
 # build model
 print('building model')
-res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim)
+#res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim)
+res = build_encoder(x, weights, biases, phone_num, batch_size, True)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
 reg_cost = 1e-6*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])

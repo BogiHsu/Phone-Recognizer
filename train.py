@@ -1,11 +1,10 @@
-import tensorflow as tf
 import numpy as np
-from sklearn.model_selection import train_test_split
-from model import phone_recognizer
-from sklearn.utils import shuffle
+import tensorflow as tf
+from model import *
 from loader import get_mfcc
-tf.set_random_seed(0)
+from sklearn.model_selection import train_test_split
 np.random.seed(0)
+tf.set_random_seed(0)
 
 # load timit2mfcc data
 print('reading data')
@@ -58,31 +57,32 @@ x_test, _, y_test, _, mask_test, _ = train_test_split(x_test, y_test, mask_test,
 print('set up parameters')
 phone_num = len(phone_dict)
 layer_num = 2
-layer_dim = [256]*layer_num
+layer_dim = [512]*layer_num
 train_size = x_train.shape[0]
-test_size = x_test.shape[0]//3
+test_size = x_test.shape[0]//4
 
 epochs = 200
 v_period = 1
 save_period = 5
 max_keep = 10
-batch_size = 16
-lr = 0.005
+batch_size = 32
+lr = 0.003
 dr = 0.5
 
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
 y = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
 mask = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
-weights = tf.Variable(tf.random_normal([2*layer_dim[-1], phone_num]))
+weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
 biases = tf.Variable(tf.random_normal([phone_num, ]))
 
 # build model
 print('building model')
-res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
+#res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
+res = build_encoder(x, weights, biases, phone_num, batch_size, True)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
-reg_cost = 1e-7*tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+reg_cost
+reg_cost = tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+0*reg_cost
 train_op = tf.train.RMSPropOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(res, 2)
@@ -93,7 +93,7 @@ accuracy = tf.divide(tf.reduce_sum(correct_pred), tf.reduce_sum(acc_mask))
 print('start training')
 init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 saver = tf.train.Saver(max_to_keep = max_keep)
-his = open('./history-adam17', 'w')
+his = open('./history-CBHG', 'w')
 with tf.Session() as sess:
 	sess.run(init[0])
 	sess.run(init[1])
@@ -105,7 +105,7 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(1, 0.01)
+			noise = np.random.normal(1, 0.02)
 			batch_xs = x_train[choose]*noise
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
@@ -116,7 +116,6 @@ with tf.Session() as sess:
 			print('\rEpoch: ', '%3d/%3d'%(step, epochs), ' | Train: ', sep = '', end = '')
 			print('%3.0f'%(100*(c/train_size)), '% ', sep = '', end = '')
 			print(' acc: %5.3f'%(t_acc/count), ' loss: %5.3f'%(t_loss/count), end = '')
-		x_train, y_train, mask_train = shuffle(x_train, y_train, mask_train, random_state = step)
 		
 		if (step%v_period == 0 or step%save_period == 0):
 			acc = 0
