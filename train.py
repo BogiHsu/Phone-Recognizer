@@ -81,8 +81,7 @@ print('building model')
 res = build_encoder(x, weights, biases, phone_num, batch_size, True)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
-reg_cost = tf.reduce_mean([tf.nn.l2_loss(v) for v in tv ])
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))+0*reg_cost
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))
 train_op = tf.train.RMSPropOptimizer(lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(res, 2)
@@ -105,7 +104,7 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(1, 0.25, (batch_size, max_length, mfcc_dim))
+			noise = np.random.normal(1, 0.1, (batch_size, max_length, mfcc_dim))
 			batch_xs = np.clip(x_train[choose]*noise, -1, 1)
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
