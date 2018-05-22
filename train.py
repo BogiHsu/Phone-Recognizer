@@ -51,7 +51,7 @@ for i in range(test_samples):
 	mask_test[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
 
 x_train, _, y_train, _, mask_train, _ = train_test_split(x_train, y_train, mask_train, test_size = .0, random_state = 0)
-x_test, _, y_test, _, mask_test, _ = train_test_split(x_test, y_test, mask_test, test_size = 0.2, random_state = 0)
+_, x_test, _, y_test, _, mask_test = train_test_split(x_test, y_test, mask_test, test_size = 0.25, random_state = 0)
 
 # init parameters
 print('set up parameters')
@@ -59,7 +59,7 @@ phone_num = len(phone_dict)
 layer_num = 2
 layer_dim = [512]*layer_num
 train_size = x_train.shape[0]
-test_size = x_test.shape[0]//4
+test_size = x_test.shape[0]
 
 epochs = 100
 v_period = 1
