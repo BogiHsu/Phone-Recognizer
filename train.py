@@ -61,7 +61,7 @@ layer_dim = [512]*layer_num
 train_size = x_train.shape[0]
 test_size = x_test.shape[0]//4
 
-epochs = 200
+epochs = 100
 v_period = 1
 save_period = 5
 max_keep = 10
@@ -104,7 +104,7 @@ with tf.Session() as sess:
 		for c in range(0, len(x_train), batch_size):
 			count += 1
 			choose = np.random.randint(0, len(x_train), batch_size)
-			noise = np.random.normal(1, 0.1, (batch_size, max_length, mfcc_dim))
+			noise = np.random.normal(1, 0.05, (batch_size, max_length, mfcc_dim))
 			batch_xs = np.clip(x_train[choose]*noise, -1, 1)
 			batch_ys = y_train[choose]
 			batch_masks = mask_train[choose]
