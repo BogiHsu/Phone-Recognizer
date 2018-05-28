@@ -8,37 +8,33 @@ np.random.seed(0)
 
 # load timit2mfcc data
 print('reading data')
-_, o_y_train, o_x_test, o_y_test, phone_dict = get_mfcc()
+o_x_train, o_y_train, o_x_test, o_y_test, phone_dict = get_mfcc()
 
 # preprocessing
 print('preprocessing')
-num_samples = o_x_test.shape[0]
-max_length = max([len(train) for train in o_y_train]+[len(test) for test in o_y_test])
-print(max_length)
-exit()
+num_samples = o_x_train.shape[0]
+max_length = max([len(train) for train in o_y_train]+[len(test) for test in o_y_train])
 mfcc_dim = 39
 filt_silence = False
 x_test = np.zeros([num_samples, max_length, mfcc_dim])
 y_test = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 mask_test = np.zeros([num_samples, max_length, len(phone_dict)], dtype = 'int8')
 for i in range(num_samples):
-	x_test[i, :len(o_x_test[i]), :] = o_x_test[i]/60
-	y_test[i, :len(o_y_test[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_test[i]]
+	x_test[i, :len(o_x_train[i]), :] = o_x_train[i]/60
+	y_test[i, :len(o_y_train[i]), :] = np.eye(len(phone_dict), dtype = 'int8')[o_y_train[i]]
 	if filt_silence:
-		to_many = [0, len(o_y_test[i])]
+		to_many = [0, len(o_y_train[i])]
 		past = 0
-		for here in np.where(o_y_test[i] == 0)[0]:
+		for here in np.where(o_y_train[i] == 0)[0]:
 			if here-past > 1:
 				to_many[0] = past
 				to_many[1] = here
 				break
 			past = here
-		to_many[1] = min(len(o_y_test[i]), to_many[1]+1)
+		to_many[1] = min(len(o_y_train[i]), to_many[1]+1)
 		mask_test[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
 	else:
-		mask_test[i, :len(o_y_test[i]), :] = np.array([[1]*len(phone_dict) for _ in range(len(o_y_test[i]))])
-
-x_test, _, y_test, _, mask_test, _= train_test_split(x_test, y_test, mask_test, test_size = 0., random_state = 0)
+		mask_test[i, :len(o_y_train[i]), :] = np.array([[1]*len(phone_dict) for _ in range(len(o_y_train[i]))])
 
 # init parameters
 print('set up parameters')
@@ -108,8 +104,6 @@ with tf.Session() as sess:
 		filt_acc += np.sum(filt_same)/np.sum(batch_masks)
 		# count batchs
 		count += 1
-		#choose = 3
-		#print(phone_dict[pre[choose][i]], phone_dict[np.argmax(batch_ys, 2)[choose][i]])
 	print('\nTF:', 'acc: %5.3f'%(acc/count), ' loss: %.3f'%(loss/count))
 	print('BF:', 'acc: %5.3f'%(raw_acc/count))
 	print('AF:', 'acc: %5.3f'%(filt_acc/count))
