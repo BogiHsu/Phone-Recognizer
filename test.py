@@ -14,8 +14,6 @@ _, o_y_train, o_x_test, o_y_test, phone_dict = get_mfcc()
 print('preprocessing')
 num_samples = o_x_test.shape[0]
 max_length = max([len(train) for train in o_y_train]+[len(test) for test in o_y_test])
-print(max_length)
-exit()
 mfcc_dim = 39
 filt_silence = False
 x_test = np.zeros([num_samples, max_length, mfcc_dim])
@@ -59,7 +57,6 @@ print('building model')
 #res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim)
 res = build_encoder(x, weights, biases, phone_num, batch_size, True)
 mask_res = tf.multiply(res, mask)
-tv = tf.trainable_variables()
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))
 predict = tf.argmax(mask_res, 2)
