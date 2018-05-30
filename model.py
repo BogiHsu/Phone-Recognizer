@@ -22,7 +22,7 @@ def phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer
 
 	return logits
 
-def build_encoder(x, weights, biases, phone_num, batch_size, is_training):
+def build_encoder(x, weights, biases, phone_num, batch_size, is_training, sf = False):
 	# x = [batch, seq_len, emb_dim]
 
 	## prenet
@@ -68,5 +68,7 @@ def build_encoder(x, weights, biases, phone_num, batch_size, is_training):
 		outputs = tf.reshape(memory, [-1, hp.embed_size])
 		results = tf.matmul(outputs, weights) + biases
 		logits = tf.reshape(results, [batch_size, -1, phone_num])
-
+	
+	if sf:
+		return tf.nn.softmax(logits)
 	return logits
