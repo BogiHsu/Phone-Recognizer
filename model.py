@@ -22,9 +22,10 @@ def phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer
 
 	return logits
 
-def build_encoder(x, weights, biases, phone_num, batch_size, is_training, sf = False):
+def build_encoder(x, phone_num, batch_size, layer_dim, is_training, sf = False):
 	# x = [batch, seq_len, emb_dim]
-
+	weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
+	biases = tf.Variable(tf.random_normal([phone_num, ]))
 	## prenet
 	## prenet_out = [batch, seq_len, hp.prenet2_size]
 	with tf.variable_scope('encoder_prenet'):

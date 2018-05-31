@@ -87,8 +87,6 @@ batch_size = 32
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
 y = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
 mask = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
-weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
-biases = tf.Variable(tf.random_normal([phone_num, ]))
 
 # for frames <-> time steps
 sample_rate = 16000
@@ -99,7 +97,7 @@ stride = win_step*sample_rate
 
 # build model
 print('building model')
-res = build_encoder(x, weights, biases, phone_num, batch_size, False)
+res = build_encoder(x, phone_num, batch_size, layer_dim, False)
 
 # writing step
 print('writing')

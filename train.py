@@ -72,13 +72,10 @@ dr = 0.5
 x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
 y = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
 mask = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
-weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
-biases = tf.Variable(tf.random_normal([phone_num, ]))
 
 # build model
 print('building model')
-#res = phone_recognizer(x, weights, biases, phone_num, batch_size, layer_num, layer_dim, dr)
-res = build_encoder(x, weights, biases, phone_num, batch_size, True)
+res = build_encoder(x, phone_num, batch_size, layer_dim, True)
 mask_res = tf.multiply(res, mask)
 tv = tf.trainable_variables()
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))

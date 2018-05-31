@@ -22,10 +22,7 @@ class PR():
 		layer_dim = [512]*layer_num
 
 		self.x = tf.placeholder(tf.float32, [batch_size, max_length, mfcc_dim])
-		self.mask = tf.placeholder(tf.float32, [batch_size, max_length, phone_num])
-		self.weights = tf.Variable(tf.random_normal([layer_dim[-1], phone_num]))
-		self.biases = tf.Variable(tf.random_normal([phone_num, ]))
-		self.model = build_encoder(x, weights, biases, phone_num, batch_size, False, True)
+		self.res = build_encoder(x, phone_num, batch_size, layer_dim, False, True)
 		
 		self.sess = tf.Session()
 		saver = tf.train.Saver()
@@ -42,4 +39,4 @@ class PR():
 		return audio
 	
 	def predict(self, batch_xs):
-		return self.sess.run(self.model, feed_dict = {x:batch_xs})
+		return self.sess.run(self.res, feed_dict = {x:batch_xs})
