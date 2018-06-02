@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from model import *
 from python_speech_features import mfcc
+from hyperparams import Hyperparams as hp
 tf.set_random_seed(0)
 np.random.seed(0)
 

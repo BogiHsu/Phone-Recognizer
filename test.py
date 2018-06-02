@@ -2,9 +2,9 @@ import numpy as np
 import tensorflow as tf
 from model import *
 from loader import get_mfcc
-from sklearn.model_selection import train_test_split
-tf.set_random_seed(0)
+from hyperparams import Hyperparams as hp
 np.random.seed(0)
+tf.set_random_seed(0)
 
 # load timit2mfcc data
 print('reading data')
