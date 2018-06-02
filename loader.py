@@ -1,22 +1,21 @@
+from sklearn.model_selection import train_test_split
+from hyperparams import Hyperparams as hp
 from python_speech_features import mfcc
-from sphfile import SPHFile
 import numpy as np
 import librosa
+import sys
 import os
+np.random.seed(0)
 
-sample_rate = 16000
-win_len = 0.025
-win_step = 0.01
-mfcc_dim = 39
-h_window = win_len*sample_rate*0.5#1440*0.5
-stride = win_step*sample_rate#400
+h_window = hp.win_len*hp.sample_rate*0.5
+stride = hp.win_step*hp.sample_rate
 
 def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
-	audio = SPHFile(path).content
-	audio = mfcc(audio, numcep = mfcc_dim, nfilt = mfcc_dim, winlen = win_len, winstep = win_step)
-	#audio = np.transpose(librosa.feature.mfcc(y = audio.astype(float), sr = sample_rate, n_mfcc = mfcc_dim, n_fft = int(h_window*2), hop_length = int(stride)), [1,0])
+	audio, _ = librosa.load(path, mono = True)
+	audio = mfcc(audio, samplerate = hp.sample_rate, numcep = hp.mfcc_dim,
+			nfilt = hp.mfcc_dim, winlen = hp.win_len, winstep = hp.win_step, nfft = 600)
 	audio = np.array(audio)
 	return audio
 
@@ -45,43 +44,60 @@ def get_y(path, length, phone_dict):
 	return np.array(phones, dtype = 'int8'), phone_dict
 
 
-def load_timit(timit_path):
-	x_train = []
-	y_train = []
-	x_test = []
-	y_test = []
+def load_timit(libri_path):
+	x_data = []
+	y_data = []
 	phone_dict = np.array([])
-	for two in ['train', 'test']:
-		here = os.path.join(timit_path, two) 
-		file_list = [file for file in os.listdir(here)]
-		file_list.sort()
-		for file in file_list:
-			print('\r%5s'%two, file, end = '')
-			here2 = os.path.join(here, file)
-			file_list2 = [file for file in os.listdir(here2)]
-			file_list2.sort()
-			for file2 in file_list2:
-				here3 = os.path.join(here2, file2)
-				file_list3 = [file.split('.wav')[0] for file in os.listdir(here3) if file.endswith('wav')]
-				file_list3.sort()
-				for file3 in file_list3:
-					here4 = os.path.join(here3, file3)
-					audio = get_x(here4+'.wav')
-					phones, phone_dict = get_y(here4+'.phn', len(audio), phone_dict)
-					if two == 'train':
-						x_train.append(audio)
-						y_train.append(phones)
-					else:
-						x_test.append(audio)
-						y_test.append(phones)
-					if len(phones) != len(audio):
-						print('error')
-						exit()
-	return np.array(x_train), np.array(y_train), np.array(x_test), np.array(y_test), phone_dict
+	here = libri_path
+	file_list = [file for file in os.listdir(here)]
+	file_list.sort()
+	for i, file in enumerate(file_list):
+		sys.stdout.flush()
+		here2 = os.path.join(here, file)
+		file_list2 = [file.split('.wav')[0] for file in os.listdir(here2) if file.endswith('wav')]
+		file_list2.sort()
+		for j, file2 in enumerate(file_list2):
+			print('\r', '%2d'%(i+1), '/', len(file_list), sep = '', end = ' ')
+			print('%3d'%int(100*(j+1)/len(file_list2)), '%', sep = '', end = '')
+			here3 = os.path.join(here2, file2)
+			audio = get_x(here3+'.wav')
+			phones, phone_dict = get_y(here3+'.phn', len(audio), phone_dict)
+			x_data.append(audio)
+			y_data.append(phones)
+			if len(phones) != len(audio):
+				print('error')
+				exit()
+	print('')
+	np.save('./mfcc/x_data.npy', x_data)
+	np.save('./mfcc/y_data.npy', y_data)
+	np.save('./mfcc/phone_dict.npy', phone_dict)
 
 def get_mfcc():
-	return np.load('./mfcc/x_train.npy'), np.load('./mfcc/y_train.npy'), np.load('./mfcc/x_test.npy'), np.load('./mfcc/y_test.npy'), np.load('./mfcc/phone_dict.npy')
+	o_x_data = np.load('./mfcc/x_data.npy')
+	o_y_data = np.load('./mfcc/y_data.npy')
+	phone_dict = np.load('./mfcc/phone_dict.npy')
+	phone_num = len(phone_dict)
+	num_samples = o_x_data.shape[0]
+	max_length = max([len(train) for train in o_y_data])
+	x_data = np.zeros([num_samples, max_length, hp.mfcc_dim])
+	y_data = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
+	mask_train = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
+	for i in range(num_samples):
+		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]/60
+		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
+		to_many = [0, len(o_y_data[i])]
+		past = 0
+		for here in np.where(o_y_data[i] == 0)[0]:
+			if here-past > 1:
+				to_many[0] = past
+				to_many[1] = here
+				break
+			past = here
+		to_many[1] = min(len(o_y_data[i]), to_many[1]+1)
+		mask_train[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
+
+	x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_train, test_size = 0.1, random_state = 0)
+	return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
 
 if __name__ == '__main__':
-	x_train, y_train, x_test, y_test, phone_dict = load_timit('../timit/')
-	np.save('./
+	load_timit('../Librispeech_part_timit_form/')

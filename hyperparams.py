@@ -1,4 +1,10 @@
 class Hyperparams:
+	# for data
+	sample_rate = 22050
+	win_len = 0.025
+	win_step = 0.01
+	mfcc_dim = 39
+	# for model
 	embed_size = 512
 	encoder_num_banks = 16
 	num_highwaynet_blocks = 4
@@ -7,3 +13,10 @@ class Hyperparams:
 	dropout_rate = 0.5
 	conv1d_filter_size = 256
 	gru_size = 256
+	# for training
+	epochs = 100
+	v_period = 1
+	save_period = 5
+	max_keep = 10
+	batch_size = 32
+	lr = 0.003
