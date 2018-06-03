@@ -3,7 +3,6 @@ from hyperparams import Hyperparams as hp
 from python_speech_features import mfcc
 import numpy as np
 import librosa
-import sys
 import os
 np.random.seed(0)
 
@@ -44,7 +43,7 @@ def get_y(path, length, phone_dict):
 	return np.array(phones, dtype = 'int8'), phone_dict
 
 
-def load_timit(libri_path):
+def load_libri(libri_path):
 	x_data = []
 	y_data = []
 	phone_dict = np.array([])
@@ -52,7 +51,6 @@ def load_timit(libri_path):
 	file_list = [file for file in os.listdir(here)]
 	file_list.sort()
 	for i, file in enumerate(file_list):
-		sys.stdout.flush()
 		here2 = os.path.join(here, file)
 		file_list2 = [file.split('.wav')[0] for file in os.listdir(here2) if file.endswith('wav')]
 		file_list2.sort()
@@ -72,7 +70,7 @@ def load_timit(libri_path):
 	np.save('./mfcc/y_data.npy', y_data)
 	np.save('./mfcc/phone_dict.npy', phone_dict)
 
-def get_mfcc():
+def get_mfcc(split = True):
 	o_x_data = np.load('./mfcc/x_data.npy')
 	o_y_data = np.load('./mfcc/y_data.npy')
 	phone_dict = np.load('./mfcc/phone_dict.npy')
@@ -81,14 +79,17 @@ def get_mfcc():
 	max_length = max([len(train) for train in o_y_data])
 	x_data = np.zeros([num_samples, max_length, hp.mfcc_dim])
 	y_data = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
-	mask_train = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
+	mask_data = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
 	for i in range(num_samples):
 		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]/60
 		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
-		mask_train[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
-
-	x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_train, test_size = 0.1, random_state = 0)
-	return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
+		mask_data[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
+	
+	if split:
+		x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_data, test_size = 0.1, random_state = 0)
+		return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
+	else:
+		return x_data, y_data, mask_data, phone_dict, phone_num, max_length
 
 if __name__ == '__main__':
-	load_timit('../Librispeech_part_timit_form/')
+	load_libri('../Librispeech_part_timit_form/')

@@ -9,9 +9,7 @@ tf.set_random_seed(0)
 # load mfcc data
 print('reading data')
 _, x_test, _, y_test, _, mask_test, phone_dict, phone_num, max_length = get_mfcc()
-print(phone_num)
-print(max_length)
-exit()
+
 # init parameters
 print('set up parameters')
 test_size = x_test.shape[0]
@@ -56,7 +54,7 @@ with tf.Session() as sess:
 			batch_xs = x_test[c:c+hp.batch_size]
 			batch_ys = y_test[c:c+hp.batch_size]
 			batch_masks = mask_test[c:c+hp.batch_size]
-		pre = sess.run(predict, feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
+		pre = sess.run(predict, feed_dict = {x:batch_xs, mask:batch_masks})
 		# acc from tf
 		acc += sess.run(accuracy, feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
 		loss += sess.run(cost, feed_dict = {x:batch_xs, y:batch_ys, mask:batch_masks})
