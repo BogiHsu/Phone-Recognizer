@@ -10,9 +10,8 @@ np.random.seed(0)
 class PR():
 	def __init__(self):
 		self.model_path = './models/'
-		self.batch_size = 32
-		self.phone_num = 61
-		self.max_length = 778
+		self.phone_num = 70
+		self.max_length = 1924
 		self.mfcc_dim = 39
 		self.sample_rate = 16000
 		self.win_len = 0.025

@@ -6,7 +6,7 @@ from hyperparams import Hyperparams as hp
 np.random.seed(0)
 tf.set_random_seed(0)
 
-# load timit2mfcc data
+# load mfcc data
 print('reading data')
 x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length = get_mfcc()
 
@@ -22,7 +22,6 @@ mask = tf.placeholder(tf.float32, [hp.batch_size, max_length, phone_num])
 print('building model')
 res = build_encoder(x, phone_num)
 mask_res = tf.multiply(res, mask)
-tv = tf.trainable_variables()
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = mask_res, labels = y))
 train_op = tf.train.RMSPropOptimizer(hp.lr).minimize(cost)
 acc_mask = tf.divide(tf.reduce_sum(mask, axis = -1), tf.constant(phone_num, dtype = 'float32'))

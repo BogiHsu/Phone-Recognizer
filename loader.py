@@ -85,16 +85,7 @@ def get_mfcc():
 	for i in range(num_samples):
 		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]/60
 		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
-		to_many = [0, len(o_y_data[i])]
-		past = 0
-		for here in np.where(o_y_data[i] == 0)[0]:
-			if here-past > 1:
-				to_many[0] = past
-				to_many[1] = here
-				break
-			past = here
-		to_many[1] = min(len(o_y_data[i]), to_many[1]+1)
-		mask_train[i, to_many[0]:to_many[1], :] = np.array([[1]*len(phone_dict) for _ in range(to_many[1]-to_many[0])])
+		mask_train[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
 
 	x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_train, test_size = 0.1, random_state = 0)
 	return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
