@@ -18,5 +18,5 @@ class Hyperparams:
 	v_period = 1
 	save_period = 5
 	max_keep = 10
-	batch_size = 32
+	batch_size = 128
 	lr = 0.003

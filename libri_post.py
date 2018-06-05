@@ -20,7 +20,7 @@ x = tf.placeholder(tf.float32, [hp.batch_size, max_length, hp.mfcc_dim])
 mask = tf.placeholder(tf.float32, [hp.batch_size, max_length, phone_num])
 
 files = []
-here = '../Librispeech_part_timit_form/'
+here = '../Librispeech_part_timit_form_word_boud/'
 file_list = [file for file in os.listdir(here)]
 file_list.sort()
 for i, file in enumerate(file_list):

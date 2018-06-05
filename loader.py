@@ -1,8 +1,10 @@
 from sklearn.model_selection import train_test_split
 from hyperparams import Hyperparams as hp
 from python_speech_features import mfcc
+from scipy.io import wavfile
 import numpy as np
 import librosa
+import sys
 import os
 np.random.seed(0)
 
@@ -12,7 +14,8 @@ stride = hp.win_step*hp.sample_rate
 def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
-	audio, _ = librosa.load(path, mono = True)
+	#audio, _ = librosa.load(path, mono = True)
+	_, audio = wavfile.read(path)
 	audio = mfcc(audio, samplerate = hp.sample_rate, numcep = hp.mfcc_dim,
 			nfilt = hp.mfcc_dim, winlen = hp.win_len, winstep = hp.win_step, nfft = 600)
 	audio = np.array(audio)
@@ -56,7 +59,8 @@ def load_libri(libri_path):
 		file_list2.sort()
 		for j, file2 in enumerate(file_list2):
 			print('\r', '%2d'%(i+1), '/', len(file_list), sep = '', end = ' ')
-			print('%3d'%int(100*(j+1)/len(file_list2)), '%', sep = '', end = '')
+			print('%4d'%(j+1), '/', len(file_list2), sep = '', end = ' ')
+			sys.stdout.flush()
 			here3 = os.path.join(here2, file2)
 			audio = get_x(here3+'.wav')
 			phones, phone_dict = get_y(here3+'.phn', len(audio), phone_dict)
@@ -66,14 +70,14 @@ def load_libri(libri_path):
 				print('error')
 				exit()
 	print('')
-	np.save('./mfcc/x_data.npy', x_data)
-	np.save('./mfcc/y_data.npy', y_data)
-	np.save('./mfcc/phone_dict.npy', phone_dict)
+	np.save('./mfcc/x_data_bound.npy', x_data)
+	np.save('./mfcc/y_data_bound.npy', y_data)
+	np.save('./mfcc/phone_dict_bound.npy', phone_dict)
 
 def get_mfcc(split = True):
-	o_x_data = np.load('./mfcc/x_data.npy')
-	o_y_data = np.load('./mfcc/y_data.npy')
-	phone_dict = np.load('./mfcc/phone_dict.npy')
+	o_x_data = np.load('./mfcc/x_data_bound.npy')
+	o_y_data = np.load('./mfcc/y_data_bound.npy')
+	phone_dict = np.load('./mfcc/phone_dict_bound.npy')
 	phone_num = len(phone_dict)
 	num_samples = o_x_data.shape[0]
 	max_length = max([len(train) for train in o_y_data])
@@ -84,12 +88,11 @@ def get_mfcc(split = True):
 		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]/60
 		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
 		mask_data[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
-	
 	if split:
-		x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_data, test_size = 0.1, random_state = 0)
+		x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_data, test_size = 0.01, random_state = 0)
 		return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
 	else:
 		return x_data, y_data, mask_data, phone_dict, phone_num, max_length
 
 if __name__ == '__main__':
-	load_libri('../Librispeech_part_timit_form/')
+	load_libri('../Librispeech_part_timit_form_word_boud/')
