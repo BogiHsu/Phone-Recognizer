@@ -1,7 +1,9 @@
 import os
+import sys
 import pickle
 import numpy as np
 import tensorflow as tf
+from utils import *
 from model import *
 from loader import get_mfcc
 from hyperparams import Hyperparams as hp
@@ -38,8 +40,10 @@ mask_res = tf.multiply(res, mask)
 print('start testing')
 with tf.Session() as sess:
 	saver = tf.train.Saver()
-	saver.restore(sess, tf.train.latest_checkpoint('./models/'))
+	saver.restore(sess, tf.train.latest_checkpoint('./models-bound/'))
 	for c in range(0, data_size, hp.batch_size):
+		print('%4d/%4d'%(c+1, data_size), end = '\r')
+		sys.stdout.flush()
 		if c+hp.batch_size > data_size:
 			batch_xs = x_data[-1*hp.batch_size:]
 			batch_masks = mask_data[-1*hp.batch_size:]
@@ -49,8 +53,9 @@ with tf.Session() as sess:
 			batch_masks = mask_data[c:c+hp.batch_size]
 		pre = sess.run(mask_res, feed_dict = {x:batch_xs, mask:batch_masks})
 		for i in range(hp.batch_size):
-			name = files[c+i]+'.pickle'
-			f = open(name, 'wb')
+			name = files[c+i]
+			f = open(name+'.pickle', 'wb')
 			l = np.sum(mask_data[c+i, :, 0])
-			pickle.dump([batch_xs[i, :l, :], pre[i, :l, :]], f)
+			mel, mag = get_spectrograms(name+'.wav')
+			pickle.dump([batch_xs[i, :l, :], pre[i, :l, :], mel, mag], f)
 			f.close()

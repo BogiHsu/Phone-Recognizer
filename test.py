@@ -38,7 +38,7 @@ def fast_filter(pre):
 print('start testing')
 with tf.Session() as sess:
 	saver = tf.train.Saver()
-	saver.restore(sess, tf.train.latest_checkpoint('./models/'))
+	saver.restore(sess, tf.train.latest_checkpoint('./models-bound/'))
 	acc = 0
 	loss = 0
 	raw_acc = 0

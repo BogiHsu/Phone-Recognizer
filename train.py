@@ -73,7 +73,7 @@ with tf.Session() as sess:
 				his.flush()
 				print(' | Val:', 'acc: %5.3f'%(acc/count), ' loss: %.3f'%(loss/count), end = '')
 			if step%hp.save_period == 0:
-				save_path = saver.save(sess, 'models/model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'-bound.ckpt')
+				save_path = saver.save(sess, 'models-bound/model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'-bound.ckpt')
 				print('\nsaving model to %s'%save_path, end = '')
 		print('')
 		step += 1

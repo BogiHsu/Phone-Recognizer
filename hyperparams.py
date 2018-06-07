@@ -1,9 +1,18 @@
 class Hyperparams:
 	# for data
-	sample_rate = 22050
+	sr = 22050
 	win_len = 0.025
 	win_step = 0.01
 	mfcc_dim = 39
+	is_trimming = True
+	n_fft = 1024
+	win_length = int(sr*win_len)
+	hop_length = int(sr*win_step)
+	n_mels = 80
+	n_iter = 200
+	preemphasis = .97
+	max_db = 100
+	ref_db = 20
 	# for model
 	embed_size = 512
 	encoder_num_banks = 16
@@ -18,5 +27,5 @@ class Hyperparams:
 	v_period = 1
 	save_period = 5
 	max_keep = 10
-	batch_size = 128
+	batch_size = 64
 	lr = 0.003

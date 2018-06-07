@@ -8,15 +8,15 @@ import sys
 import os
 np.random.seed(0)
 
-h_window = hp.win_len*hp.sample_rate*0.5
-stride = hp.win_step*hp.sample_rate
+h_window = hp.win_length*0.5
+stride = hp.hop_length
 
 def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
 	#audio, _ = librosa.load(path, mono = True)
 	_, audio = wavfile.read(path)
-	audio = mfcc(audio, samplerate = hp.sample_rate, numcep = hp.mfcc_dim,
+	audio = mfcc(audio, samplerate = hp.sr, numcep = hp.mfcc_dim,
 			nfilt = hp.mfcc_dim, winlen = hp.win_len, winstep = hp.win_step, nfft = 600)
 	audio = np.array(audio)
 	return audio
@@ -96,3 +96,4 @@ def get_mfcc(split = True):
 
 if __name__ == '__main__':
 	load_libri('../Librispeech_part_timit_form_word_boud/')
+	
