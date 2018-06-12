@@ -3,7 +3,7 @@ class Hyperparams:
 	sr = 22050
 	win_len = 0.025
 	win_step = 0.01
-	mfcc_dim = 39
+	mfcc_dim = 80
 	is_trimming = True
 	n_fft = 1024
 	win_length = int(sr*win_len)
@@ -27,5 +27,5 @@ class Hyperparams:
 	v_period = 1
 	save_period = 5
 	max_keep = 10
-	batch_size = 64
+	batch_size = 16
 	lr = 0.003

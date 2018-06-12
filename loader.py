@@ -2,8 +2,10 @@ from sklearn.model_selection import train_test_split
 from hyperparams import Hyperparams as hp
 from python_speech_features import mfcc
 from scipy.io import wavfile
+from utils import get_spectrograms
 import numpy as np
 import librosa
+import pickle
 import sys
 import os
 np.random.seed(0)
@@ -15,9 +17,11 @@ def get_x(path):
 	# window = 400 frames
 	# stride = 160 frames
 	#audio, _ = librosa.load(path, mono = True)
-	_, audio = wavfile.read(path)
-	audio = mfcc(audio, samplerate = hp.sr, numcep = hp.mfcc_dim,
-			nfilt = hp.mfcc_dim, winlen = hp.win_len, winstep = hp.win_step, nfft = 600)
+	#_, audio = wavfile.read(path)
+	#audio = mfcc(audio, samplerate = hp.sr, numcep = hp.mfcc_dim,
+	#		nfilt = hp.mfcc_dim, winlen = )p.win_len, winstep = hp.win_step, nfft = 600)
+	#audio = pickle.load(open(path.split('.wav')[0]+'.pickle', 'rb'))[2]
+	audio, _ = get_spectrograms(path)
 	audio = np.array(audio)
 	return audio
 
@@ -70,14 +74,14 @@ def load_libri(libri_path):
 				print('error')
 				exit()
 	print('')
-	np.save('./mfcc/x_data_bound.npy', x_data)
-	np.save('./mfcc/y_data_bound.npy', y_data)
-	np.save('./mfcc/phone_dict_bound.npy', phone_dict)
+	np.save('./mfcc/x_data_vctk.npy', x_data)
+	np.save('./mfcc/y_data_vctk.npy', y_data)
+	np.save('./mfcc/phone_dict_vctk.npy', phone_dict)
 
 def get_mfcc(split = True):
-	o_x_data = np.load('./mfcc/x_data_bound.npy')
-	o_y_data = np.load('./mfcc/y_data_bound.npy')
-	phone_dict = np.load('./mfcc/phone_dict_bound.npy')
+	o_x_data = np.load('./mfcc/x_data_vctk.npy')
+	o_y_data = np.load('./mfcc/y_data_vctk.npy')
+	phone_dict = np.load('./mfcc/phone_dict_vctk.npy')
 	phone_num = len(phone_dict)
 	num_samples = o_x_data.shape[0]
 	max_length = max([len(train) for train in o_y_data])
@@ -85,7 +89,7 @@ def get_mfcc(split = True):
 	y_data = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
 	mask_data = np.zeros([num_samples, max_length, phone_num], dtype = 'int8')
 	for i in range(num_samples):
-		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]/60
+		x_data[i, :len(o_x_data[i]), :] = o_x_data[i]
 		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
 		mask_data[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
 	if split:
@@ -95,5 +99,5 @@ def get_mfcc(split = True):
 		return x_data, y_data, mask_data, phone_dict, phone_num, max_length
 
 if __name__ == '__main__':
-	load_libri('../Librispeech_part_timit_form_word_boud/')
+	load_libri('../VCTK_part_timit_form/')
 	

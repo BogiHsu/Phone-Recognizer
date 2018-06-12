@@ -25,6 +25,7 @@ def get_spectrograms(fpath):
 	# Loading sound file
 	#y, sr = librosa.load(fpath, sr=hp.sr)
 	_, y = wavfile.read(fpath)
+	y = y.astype(float)
 
 	# Trimming
 	if hp.is_trimming:

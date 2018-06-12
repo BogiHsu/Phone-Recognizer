@@ -9,6 +9,7 @@ tf.set_random_seed(0)
 # load mfcc data
 print('reading data')
 x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length = get_mfcc()
+
 # init parameters
 print('set up parameters')
 train_size = x_train.shape[0]
@@ -32,7 +33,7 @@ accuracy = tf.divide(tf.reduce_sum(correct_pred), tf.reduce_sum(acc_mask))
 print('start training')
 init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 saver = tf.train.Saver(max_to_keep = hp.max_keep)
-his = open('./history-CBHG-bound', 'w')
+his = open('./history-CBHG-vctk', 'w')
 with tf.Session() as sess:
 	sess.run(init[0])
 	sess.run(init[1])
@@ -73,7 +74,7 @@ with tf.Session() as sess:
 				his.flush()
 				print(' | Val:', 'acc: %5.3f'%(acc/count), ' loss: %.3f'%(loss/count), end = '')
 			if step%hp.save_period == 0:
-				save_path = saver.save(sess, 'models-bound/model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'-bound.ckpt')
+				save_path = saver.save(sess, 'models-vctk/model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'.ckpt')
 				print('\nsaving model to %s'%save_path, end = '')
 		print('')
 		step += 1

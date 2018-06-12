@@ -22,7 +22,7 @@ x = tf.placeholder(tf.float32, [hp.batch_size, max_length, hp.mfcc_dim])
 mask = tf.placeholder(tf.float32, [hp.batch_size, max_length, phone_num])
 
 files = []
-here = '../Librispeech_part_timit_form_word_boud/'
+here = '../VCTK_part_timit_form/'
 file_list = [file for file in os.listdir(here)]
 file_list.sort()
 for i, file in enumerate(file_list):
@@ -40,7 +40,7 @@ mask_res = tf.multiply(res, mask)
 print('start testing')
 with tf.Session() as sess:
 	saver = tf.train.Saver()
-	saver.restore(sess, tf.train.latest_checkpoint('./models-bound/'))
+	saver.restore(sess, tf.train.latest_checkpoint('./models-vctk/'))
 	for c in range(0, data_size, hp.batch_size):
 		print('%4d/%4d'%(c+1, data_size), end = '\r')
 		sys.stdout.flush()
