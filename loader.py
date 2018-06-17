@@ -74,14 +74,14 @@ def load_libri(libri_path):
 				print('error')
 				exit()
 	print('')
-	np.save('./mfcc/x_data_bound_vctk.npy', x_data)
-	np.save('./mfcc/y_data_bound_vctk.npy', y_data)
-	np.save('./mfcc/phone_dict_bound_vctk.npy', phone_dict)
+	np.save(hp.xpath, x_data)
+	np.save(hp.ypath, y_data)
+	np.save(hp.ppath, phone_dict)
 
 def get_mfcc(split = True):
-	o_x_data = np.load('./mfcc/x_data_bound_vctk.npy')
-	o_y_data = np.load('./mfcc/y_data_bound_vctk.npy')
-	phone_dict = np.load('./mfcc/phone_dict_bound_vctk.npy')
+	o_x_data = np.load(hp.xpath)
+	o_y_data = np.load(hp.ypath)
+	phone_dict = np.load(hp.ppath)
 	phone_num = len(phone_dict)
 	num_samples = o_x_data.shape[0]
 	max_length = max([len(train) for train in o_y_data])
@@ -93,11 +93,11 @@ def get_mfcc(split = True):
 		y_data[i, :len(o_y_data[i]), :] = np.eye(phone_num, dtype = 'int8')[o_y_data[i]]
 		mask_data[i, :len(o_y_data[i]), :] = np.array([[1]*phone_num for _ in range(len(o_y_data[i]))])
 	if split:
-		x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_data, test_size = 0.01, random_state = 0)
+		x_train, x_test, y_train, y_test, mask_train, mask_test = train_test_split(x_data, y_data, mask_data, test_size = hp.split, random_state = 0)
 		return x_train, x_test, y_train, y_test, mask_train, mask_test, phone_dict, phone_num, max_length
 	else:
 		return x_data, y_data, mask_data, phone_dict, phone_num, max_length
 
 if __name__ == '__main__':
-	load_libri('../VCTK_part_timit_form_word_bound/')
+	load_libri(hp.fpath)
 	

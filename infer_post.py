@@ -14,7 +14,7 @@ tf.set_random_seed(0)
 # load mfcc data
 print('reading data')
 x_data, _, mask_data, phone_dict, phone_num, max_length = get_mfcc(False)
-n_phone_dict = np.load('mfcc/phone_dict_bound_mel.npy')
+n_phone_dict = np.load('mfcc/phone_dict_lb.npy')
 n_phone_dict = np.concatenate((n_phone_dict, np.array(['sil'])))
 n_phone_dict = np.concatenate((n_phone_dict, np.array(['OY2'])))
 transfer = [np.where(phone_dict == e)[0][0] for e in n_phone_dict
@@ -27,7 +27,7 @@ x = tf.placeholder(tf.float32, [hp.batch_size, max_length, hp.mfcc_dim])
 mask = tf.placeholder(tf.float32, [hp.batch_size, max_length, phone_num])
 
 files = []
-here = '../VCTK_part_timit_form_word_bound/'
+here = hp.fpath
 file_list = [file for file in os.listdir(here)]
 file_list.sort()
 for i, file in enumerate(file_list):
@@ -45,7 +45,7 @@ mask_res = tf.multiply(res, mask)
 print('start testing')
 with tf.Session() as sess:
 	saver = tf.train.Saver()
-	saver.restore(sess, tf.train.latest_checkpoint('./models-bound-vctk/'))
+	saver.restore(sess, tf.train.latest_checkpoint(hp.mpath))
 	for c in range(0, data_size, hp.batch_size):
 		print('%4d/%4d'%(c+1, data_size), end = '\r')
 		sys.stdout.flush()
@@ -60,10 +60,10 @@ with tf.Session() as sess:
 		for i in range(hp.batch_size):
 			name = files[c+i]
 			f = open(name+'.pickle', 'wb')
-			l = np.sum(mask_data[c+i, :, 0])
+			l = np.sum(batch_masks[i, :, 0])
 			mel, mag = get_spectrograms(name+'.wav')
-			while pre.shape[2] < len(n_phone_dict):
-				pre = np.concatenate((pre, np.zeros((pre.shape[0], pre.shape[1], 1))), axis = -1)
-			td = pre[i, :l, transfer]
-			pickle.dump([batch_xs[i, :l, :], pre[i, :l, :], mel, mag], f)
+			td = np.array([pre[i][j][transfer] for j in range(l)])
+			while td.shape[1] < len(n_phone_dict):
+				td = np.concatenate((td, np.zeros((td.shape[0], 1))), axis = -1)
+			pickle.dump([batch_xs[i, :l, :], td, mel, mag], f)
 			f.close()

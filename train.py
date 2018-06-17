@@ -33,7 +33,7 @@ accuracy = tf.divide(tf.reduce_sum(correct_pred), tf.reduce_sum(acc_mask))
 print('start training')
 init = (tf.global_variables_initializer(), tf.local_variables_initializer())
 saver = tf.train.Saver(max_to_keep = hp.max_keep)
-his = open('./history-CBHG-bound-vctk', 'w')
+his = open(hp.hpath, 'w')
 with tf.Session() as sess:
 	sess.run(init[0])
 	sess.run(init[1])
@@ -74,7 +74,7 @@ with tf.Session() as sess:
 				his.flush()
 				print(' | Val:', 'acc: %5.3f'%(acc/count), ' loss: %.3f'%(loss/count), end = '')
 			if step%hp.save_period == 0:
-				save_path = saver.save(sess, 'models-bound-vctk/model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'.ckpt')
+				save_path = saver.save(sess, hp.mpath+'model-'+str(step).zfill(3)+'-'+str(round(acc/count, 2))+'.ckpt')
 				print('\nsaving model to %s'%save_path, end = '')
 		print('')
 		step += 1

@@ -1,5 +1,6 @@
 class Hyperparams:
 	# for data
+	split = 0.05
 	sr = 22050
 	win_len = 0.025
 	win_step = 0.01
@@ -29,3 +30,14 @@ class Hyperparams:
 	max_keep = 10
 	batch_size = 16
 	lr = 0.003
+	# dirs
+	#fpath = '../resample/VCTK_sent/'
+	fpath = '../resample/Libri_sent/'
+	#fpath = '../Librispeech_part_timit_form_word_boud'
+	#fpath = '../VCTK_part_timit_form_word_bound'
+	mpath = './models-l/'
+	hpath = './history_l'
+	xpath = './mfcc/x_data_l.npy'
+	ypath = './mfcc/y_data_l.npy'
+	ppath = './mfcc/phone_dict_l.npy'
+	
